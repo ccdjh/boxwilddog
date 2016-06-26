@@ -8,5 +8,5 @@ setup(
     license = 'MIT License',
     author = 'CcdjhMarx',
     author_email = 'ccdjh.marx@all.com',
-    packages = ['boxmongodb'],
+    packages = ['boxwilddog'],
 )
