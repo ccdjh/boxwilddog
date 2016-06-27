@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #  Copyright 2016 ccdjh <ccdjh.marx@gmail.com>
-
+import sys
 import time
 import json
 import types 
@@ -84,3 +84,191 @@ class HelperHandler():
     def helper_time(cls):
         return str(int(time.time()))
 
+
+class box_wilddog_helper(object):
+
+    def __init__(self,uri,auth):
+        self.URL =uri
+        self.AUTH = auth
+
+    def counter_value(self,name):
+        uri ='''https://%s.wilddogio.com/counter/%s.json'''%(self.URL,name)
+        auth = self.AUTH
+        url = '%s?auth=%s'%(uri,auth)
+
+        request = urllib2.Request(url)
+        request.add_header('Content-Type', 'application/json')
+        request.add_header('Accept', 'application/json')
+        request.get_method = lambda: 'GET'
+        response = urllib2.urlopen(request)
+        counter_value = response.read()
+        if counter_value == 'null':
+            counter_value = '0'
+        else:
+            counter_value = json.loads(counter_value)
+        return counter_value #unicode
+
+
+    def counter_plus(self,name):
+        counter = self.counter_value(name)
+        counter = str(int(counter) + 1)
+
+        uri ='''https://%s.wilddogio.com/counter.json'''%self.URL
+        auth = self.AUTH
+        url = '%s?auth=%s'%(uri,auth)
+        data = '''{"%s":"%s"}'''%(name,counter)
+
+        request = urllib2.Request(url, data=data)
+        request.add_header('Content-Type', 'application/json')
+        request.add_header('Accept', 'application/json')
+        request.get_method = lambda: 'PATCH'
+        response = urllib2.urlopen(request)
+        counter_value = response.read()
+
+        return counter
+
+    def counter_minus(self,name):
+        counter = self.counter_value(name)
+        if counter == u'0':
+            counter = str(int(counter))
+        else:
+            counter = str(int(counter) - 1)
+
+            uri ='''https://%s.wilddogio.com/counter.json'''%self.URL
+            auth = self.AUTH
+            url = '%s?auth=%s'%(uri,auth)
+            data = '''{"%s":"%s"}'''%(name,counter)
+
+            request = urllib2.Request(url, data=data)
+            request.add_header('Content-Type', 'application/json')
+            request.add_header('Accept', 'application/json')
+            request.get_method = lambda: 'PATCH'
+            response = urllib2.urlopen(request)
+            counter_value = response.read()
+
+        return counter
+
+
+    def datum_get(self,name):
+        uri ='''https://%s.wilddogio.com/datum/%s.json'''%(self.URL,name)
+        auth = self.AUTH
+        url = '%s?auth=%s'%(uri,auth)
+
+        request = urllib2.Request(url)
+        request.add_header('Content-Type', 'application/json')
+        request.add_header('Accept', 'application/json')
+        request.get_method = lambda: 'GET'
+        response = urllib2.urlopen(request)
+        counter_value = response.read()
+        if counter_value == 'null':
+            counter_value = 'none'
+        else:
+            counter_value = json.loads(counter_value)
+        return counter_value #unicode
+
+
+    def datum_push(self,name,value):
+
+
+        uri ='''https://%s.wilddogio.com/datum.json'''%self.URL
+        auth = self.AUTH
+        url = '%s?auth=%s'%(uri,auth)
+        data = '''{"%s":"%s"}'''%(name,value)
+
+        request = urllib2.Request(url, data=data)
+        request.add_header('Content-Type', 'application/json')
+        request.add_header('Accept', 'application/json')
+        request.get_method = lambda: 'PATCH'
+        response = urllib2.urlopen(request)
+        counter_value = response.read()
+        # print counter_value
+        return value
+
+    def expires_get(self,name):
+        uri ='''https://%s.wilddogio.com/expires/%s.json'''%(self.URL,name)
+        auth = self.AUTH
+        url = '%s?auth=%s'%(uri,auth)
+
+        # print url
+
+        request = urllib2.Request(url)
+        request.add_header('Content-Type', 'application/json')
+        request.add_header('Accept', 'application/json')
+        request.get_method = lambda: 'GET'
+        response = urllib2.urlopen(request)
+        expires_value = response.read()
+        if expires_value == 'null':
+            expires_value = 'none'
+            return 'none'
+
+        else:
+            expires_value = json.loads(expires_value)
+            # print expires_value
+            expires_in_1 = unicode(int(expires_value[1]) - int(time.time()))
+            # print expires_in_1
+
+            if int(expires_in_1) < 0 :
+                expires_in_1 = 0
+
+            return '''["%s","%s","%s"]'''%(name,expires_value[0],expires_in_1)
+
+
+    def expires_push(self,name,value,expires_in):
+        uri ='''https://%s.wilddogio.com/expires.json'''%self.URL
+        auth = self.AUTH
+        url = '%s?auth=%s'%(uri,auth)
+        # print int(time.time())
+        expires_in_1 = unicode(int(time.time()) + int(expires_in))
+        # print expires_in_1
+        data = '''{"%s":["%s","%s"]}'''%(name,value,expires_in_1)
+        # print data
+
+        request = urllib2.Request(url, data=data)
+        request.add_header('Content-Type', 'application/json')
+        request.add_header('Accept', 'application/json')
+        request.get_method = lambda: 'PATCH'
+        response = urllib2.urlopen(request)
+        expires_value = response.read()
+        # print counter_value
+        return '''["%s","%s","%s"]'''%(name,value,expires_in)
+
+
+
+
+
+#test 
+
+
+class sy(Model):
+    a_auth = AuthProperty()
+    a_time = TimeProperty()
+
+    a1 = StringProperty()
+    a2 = StringProperty(default='my a2')
+
+
+def main():
+    u = sys.argv[1]
+    a = sys.argv[2]
+
+    s = sy()
+    print s.value
+
+
+    k = box_wilddog_helper(u,a)
+    c = k.counter_minus('box')
+    # c = k.counter_plus('box')
+    # c = k.counter_value('box')
+
+    # c = k.datum_push('box','love qing')
+    # c = k.datum_get('box')
+
+    # c = k.expires_push('box2','love qing22','10')
+    # c = k.expires_get('box2')
+    print c
+
+
+
+
+if __name__ == '__main__':
+    main()
