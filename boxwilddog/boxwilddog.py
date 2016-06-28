@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 #  Copyright 2016 ccdjh <ccdjh.marx@gmail.com>
+from __future__ import absolute_import, division, print_function, with_statement
+
+
 import sys
 import time
 import json
@@ -189,11 +192,12 @@ class box_wilddog_helper(object):
         auth = self.AUTH
         url = '%s?auth=%s'%(uri,auth)
 
-        # print url
+        # print(url)
 
         request = urllib2.Request(url)
         request.add_header('Content-Type', 'application/json')
         request.add_header('Accept', 'application/json')
+        request.add_header('User-agent', 'Mozilla/5.0')
         request.get_method = lambda: 'GET'
         response = urllib2.urlopen(request)
         expires_value = response.read()
@@ -252,20 +256,22 @@ def main():
     a = sys.argv[2]
 
     s = sy()
-    print s.value
+    print(s.value)
 
 
     k = box_wilddog_helper(u,a)
-    c = k.counter_minus('box')
+    # c = k.counter_minus('box')
     # c = k.counter_plus('box')
     # c = k.counter_value('box')
 
     # c = k.datum_push('box','love qing')
-    # c = k.datum_get('box')
+    c = k.datum_get('box31')
 
     # c = k.expires_push('box2','love qing22','10')
-    # c = k.expires_get('box2')
-    print c
+    # c = k.expires_get('box31')
+    print(c)
+
+
 
 
 
