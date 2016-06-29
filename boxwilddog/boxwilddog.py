@@ -243,33 +243,34 @@ class box_wilddog_helper(object):
 #test 
 
 
-class sy(Model):
-    a_auth = AuthProperty()
-    a_time = TimeProperty()
+# class sy(Model):
+#     a_auth = AuthProperty()
+#     a_time = TimeProperty()
 
-    a1 = StringProperty()
-    a2 = StringProperty(default='my a2')
+#     a1 = StringProperty()
+#     a2 = StringProperty(default='my a2')
 
 
 def main():
-    u = sys.argv[1]
-    a = sys.argv[2]
+    pass
+    # u = sys.argv[1]
+    # a = sys.argv[2]
 
-    s = sy()
-    print(s.value)
+    # s = sy()
+    # print(s.value)
 
 
-    k = box_wilddog_helper(u,a)
+    # k = box_wilddog_helper(u,a)
     # c = k.counter_minus('box')
     # c = k.counter_plus('box')
     # c = k.counter_value('box')
 
     # c = k.datum_push('box','love qing')
-    c = k.datum_get('box31')
+    # c = k.datum_get('box31')
 
     # c = k.expires_push('box2','love qing22','10')
     # c = k.expires_get('box31')
-    print(c)
+    # print(c)
 
 
 
