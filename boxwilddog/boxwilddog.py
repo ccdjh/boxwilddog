@@ -88,7 +88,7 @@ class HelperHandler():
         return str(int(time.time()))
 
 
-class box_wilddog_helper(object):
+class Box(object):
 
     def __init__(self,uri,auth):
         self.URL =uri
