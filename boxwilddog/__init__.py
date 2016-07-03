@@ -30,6 +30,6 @@ __author__ = 'Ccdjh Marx'
 __license__ = 'The MIT License (MIT)'
 __copyright__ = 'Copyright (c) 2016 Ccdjh.Marx'
 
-version = "0.0.2"
-version_info = (0,0,2,0)
+version = "0.0.3"
+version_info = (0,0,3,0)
 
