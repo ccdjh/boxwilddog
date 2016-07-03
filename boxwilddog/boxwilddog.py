@@ -97,173 +97,271 @@ class Box(object):
     def box_core(self,*args,**kwargs):
         # print (args)
         print (kwargs)
+        # url data key
         if kwargs['name'] == u'datum_get':
-            url = u'''https://%s.wilddogio.com/datum/%s.json?auth=%s'''%(self.URL,kwargs['data'][1],self.AUTH)
+            url = u'''https://%s.wilddogio.com/datum/%s.json?auth=%s'''%(self.URL,kwargs['n'],self.AUTH)
             data = None
             k = u'GET'
+        elif kwargs['name'] == u'datum_set':
+            url = u'''https://%s.wilddogio.com/datum.json?auth=%s'''%(self.URL,self.AUTH)
+            data = '''{"%s":"%s"}'''%(kwargs['n'],kwargs['v'])
+            k = u'PATCH'
+        elif kwargs['name'] == u'counter_get':
+            url = u'''https://%s.wilddogio.com/counter/%s.json?auth=%s'''%(self.URL,kwargs['n'],self.AUTH)
+            data = None
+            k = u'GET'
+        elif kwargs['name'] == u'counter_add':
+            url = u'''https://%s.wilddogio.com/counter.json?auth=%s'''%(self.URL,self.AUTH)
+            counter = self.counter_get(kwargs['n'])
+            counter = str(int(counter) + 1)
+            data = '''{"%s":"%s"}'''%(kwargs['n'],counter)
+            k = u'PATCH'
+        elif kwargs['name'] == u'counter_reduce':
+            url = u'''https://%s.wilddogio.com/counter.json?auth=%s'''%(self.URL,self.AUTH)
+            counter = self.counter_get(kwargs['n'])
+            counter = str(int(counter) - 1)
+            data = '''{"%s":"%s"}'''%(kwargs['n'],counter)
+            k = u'PATCH'
+        elif kwargs['name'] == u'expires_get':
+            url = u'''https://%s.wilddogio.com/expires/%s.json?auth=%s'''%(self.URL,kwargs['n'],self.AUTH)
+            data = None
+            k = u'GET'
+        elif kwargs['name'] == u'expires_set':
+            url = u'''https://%s.wilddogio.com/expires.json?auth=%s'''%(self.URL,self.AUTH)
+            expires_in_1 = unicode(int(time.time()) + int(kwargs['e']))
+            data = '''{"%s":["%s","%s"]}'''%(kwargs['n'],kwargs['v'],expires_in_1)
+            k = u'PATCH'
 
+
+
+        print (url)
+        # urllib2 core
         request = urllib2.Request(url,data)
         request.add_header('Content-Type', 'application/json')
         request.add_header('Accept', 'application/json')
         request.get_method = lambda: k
-        response = urllib2.urlopen(request)
-        counter_value = response.read()
-        if counter_value == 'null':
-            counter_value = 'none'
-        else:
-            counter_value = json.loads(counter_value)
-        return counter_value #unicode
+
+        box_response = ''
+        box_errors = 0
+        box_error = 0
+        box_return = 'None'
 
 
-    def datum_get2(self,name):
-        return self.box_core(name=u'datum_get',data=locals().keys())
+        try:
+            response = urllib2.urlopen(request)
+            box_response = response.read()
+
+        except urllib2.URLError,e:
+            box_response = e.reason
+            box_errors = box_errors + 1
+            box_error = 1
+        except urllib2.HTTPError,e:
+            box_response = e.reason
+            box_errors = box_errors + 1
+            box_error = 2
+
+        if box_errors == 0:
+            try:
+                box_response_json = json.loads(box_response)
+            except:
+                box_errors = box_errors + 1
+                box_error = 3
 
 
-        return counter_value #unicode
+        # return value
+        if box_errors == 0:
+            if kwargs['name'] == u'datum_get':
+                box_return = 'None'  if box_response == 'null' else json.loads(box_response)
+            if kwargs['name'] == u'datum_set':
+                box_return = json.loads(box_response)
+                box_return = box_return.items()[0][1]
+            if kwargs['name'] == u'counter_get':
+                box_return = '0'  if box_response == 'null' else json.loads(box_response)
+            if kwargs['name'] == u'counter_add':
+                box_return = '0'  if box_response == 'null' else json.loads(box_response)
+                box_return = box_return.items()[0][1]
+            if kwargs['name'] == u'counter_reduce':
+                box_return = '0'  if box_response == 'null' else json.loads(box_response)
+                box_return = box_return.items()[0][1]
+            if kwargs['name'] == u'expires_get':
+                if box_response != 'null':
+                    expires_value = json.loads(box_response)
+                    expires_in_1 = 0 if int(unicode(int(expires_value[1]) - int(time.time()))) < 0  else unicode(int(expires_value[1]) - int(time.time()))
+                    box_return = '''["%s","%s","%s"]'''%(kwargs['n'],expires_value[0],expires_in_1)
+                else:
+                    box_return = 'None'
+            if kwargs['name'] == u'expires_set':
+                box_return = json.loads(box_response)
+                box_return = '''["%s","%s","%s"]'''%(kwargs['n'],kwargs['v'],kwargs['e'])
+
+
+
+        return box_return
+
+    def counter_get(self,name):
+        return self.box_core(name=u'counter_get',n=name)
+
+    def counter_add(self,name):
+        return self.box_core(name=u'counter_add',n=name)
+
+    def counter_reduce(self,name):
+        return self.box_core(name=u'counter_reduce',n=name)
 
     def datum_get(self,name):
-        uri ='''https://%s.wilddogio.com/datum/%s.json'''%(self.URL,name)
-        auth = self.AUTH
-        url = '%s?auth=%s'%(uri,auth)
+        return self.box_core(name=u'datum_get',n=name)
 
-        request = urllib2.Request(url)
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('Accept', 'application/json')
-        request.get_method = lambda: 'GET'
-        response = urllib2.urlopen(request)
-        counter_value = response.read()
-        if counter_value == 'null':
-            counter_value = 'none'
-        else:
-            counter_value = json.loads(counter_value)
-        return counter_value #unicode
-
-
-    def datum_push(self,name,value):
-
-
-        uri ='''https://%s.wilddogio.com/datum.json'''%self.URL
-        auth = self.AUTH
-        url = '%s?auth=%s'%(uri,auth)
-        data = '''{"%s":"%s"}'''%(name,value)
-
-        request = urllib2.Request(url, data=data)
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('Accept', 'application/json')
-        request.get_method = lambda: 'PATCH'
-        response = urllib2.urlopen(request)
-        counter_value = response.read()
-        # print counter_value
-        return value
-
-
-    def counter_value(self,name):
-        uri ='''https://%s.wilddogio.com/counter/%s.json'''%(self.URL,name)
-        auth = self.AUTH
-        url = '%s?auth=%s'%(uri,auth)
-
-        request = urllib2.Request(url)
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('Accept', 'application/json')
-        request.get_method = lambda: 'GET'
-        response = urllib2.urlopen(request)
-        counter_value = response.read()
-        if counter_value == 'null':
-            counter_value = '0'
-        else:
-            counter_value = json.loads(counter_value)
-        return counter_value #unicode
-
-
-    def counter_plus(self,name):
-        counter = self.counter_value(name)
-        counter = str(int(counter) + 1)
-
-        uri ='''https://%s.wilddogio.com/counter.json'''%self.URL
-        auth = self.AUTH
-        url = '%s?auth=%s'%(uri,auth)
-        data = '''{"%s":"%s"}'''%(name,counter)
-
-        request = urllib2.Request(url, data=data)
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('Accept', 'application/json')
-        request.get_method = lambda: 'PATCH'
-        response = urllib2.urlopen(request)
-        counter_value = response.read()
-
-        return counter
-
-    def counter_minus(self,name):
-        counter = self.counter_value(name)
-        if counter == u'0':
-            counter = str(int(counter))
-        else:
-            counter = str(int(counter) - 1)
-
-            uri ='''https://%s.wilddogio.com/counter.json'''%self.URL
-            auth = self.AUTH
-            url = '%s?auth=%s'%(uri,auth)
-            data = '''{"%s":"%s"}'''%(name,counter)
-
-            request = urllib2.Request(url, data=data)
-            request.add_header('Content-Type', 'application/json')
-            request.add_header('Accept', 'application/json')
-            request.get_method = lambda: 'PATCH'
-            response = urllib2.urlopen(request)
-            counter_value = response.read()
-
-        return counter
-
-
+    def datum_set(self,name,value):
+        return self.box_core(name=u'datum_set',n=name,v=value)
 
     def expires_get(self,name):
-        uri ='''https://%s.wilddogio.com/expires/%s.json'''%(self.URL,name)
-        auth = self.AUTH
-        url = '%s?auth=%s'%(uri,auth)
+        return self.box_core(name=u'expires_get',n=name)
 
-        # print(url)
+    def expires_set(self,name,value,expires_in):
+        return self.box_core(name=u'expires_set',n=name,v=value,e=expires_in)
 
-        request = urllib2.Request(url)
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('Accept', 'application/json')
-        request.add_header('User-agent', 'Mozilla/5.0')
-        request.get_method = lambda: 'GET'
-        response = urllib2.urlopen(request)
-        expires_value = response.read()
-        if expires_value == 'null':
-            expires_value = 'none'
-            return 'none'
+    # def datum_get(self,name):
+    #     uri ='''https://%s.wilddogio.com/datum/%s.json'''%(self.URL,name)
+    #     auth = self.AUTH
+    #     url = '%s?auth=%s'%(uri,auth)
 
-        else:
-            expires_value = json.loads(expires_value)
-            # print expires_value
-            expires_in_1 = unicode(int(expires_value[1]) - int(time.time()))
-            # print expires_in_1
-
-            if int(expires_in_1) < 0 :
-                expires_in_1 = 0
-
-            return '''["%s","%s","%s"]'''%(name,expires_value[0],expires_in_1)
+    #     request = urllib2.Request(url)
+    #     request.add_header('Content-Type', 'application/json')
+    #     request.add_header('Accept', 'application/json')
+    #     request.get_method = lambda: 'GET'
+    #     response = urllib2.urlopen(request)
+    #     counter_value = response.read()
+    #     if counter_value == 'null':
+    #         counter_value = 'none'
+    #     else:
+    #         counter_value = json.loads(counter_value)
+    #     return counter_value #unicode
 
 
-    def expires_push(self,name,value,expires_in):
-        uri ='''https://%s.wilddogio.com/expires.json'''%self.URL
-        auth = self.AUTH
-        url = '%s?auth=%s'%(uri,auth)
-        # print int(time.time())
-        expires_in_1 = unicode(int(time.time()) + int(expires_in))
-        # print expires_in_1
-        data = '''{"%s":["%s","%s"]}'''%(name,value,expires_in_1)
-        # print data
+    # def datum_push(self,name,value):
 
-        request = urllib2.Request(url, data=data)
-        request.add_header('Content-Type', 'application/json')
-        request.add_header('Accept', 'application/json')
-        request.get_method = lambda: 'PATCH'
-        response = urllib2.urlopen(request)
-        expires_value = response.read()
-        # print counter_value
-        return '''["%s","%s","%s"]'''%(name,value,expires_in)
+
+    #     uri ='''https://%s.wilddogio.com/datum.json'''%self.URL
+    #     auth = self.AUTH
+    #     url = '%s?auth=%s'%(uri,auth)
+    #     data = '''{"%s":"%s"}'''%(name,value)
+
+    #     request = urllib2.Request(url, data=data)
+    #     request.add_header('Content-Type', 'application/json')
+    #     request.add_header('Accept', 'application/json')
+    #     request.get_method = lambda: 'PATCH'
+    #     response = urllib2.urlopen(request)
+    #     counter_value = response.read()
+    #     # print counter_value
+    #     return value
+
+
+    # def counter_value(self,name):
+    #     uri ='''https://%s.wilddogio.com/counter/%s.json'''%(self.URL,name)
+    #     auth = self.AUTH
+    #     url = '%s?auth=%s'%(uri,auth)
+
+    #     request = urllib2.Request(url)
+    #     request.add_header('Content-Type', 'application/json')
+    #     request.add_header('Accept', 'application/json')
+    #     request.get_method = lambda: 'GET'
+    #     response = urllib2.urlopen(request)
+    #     counter_value = response.read()
+    #     if counter_value == 'null':
+    #         counter_value = '0'
+    #     else:
+    #         counter_value = json.loads(counter_value)
+    #     return counter_value #unicode
+
+
+    # def counter_plus(self,name):
+    #     counter = self.counter_value(name)
+    #     counter = str(int(counter) + 1)
+
+    #     uri ='''https://%s.wilddogio.com/counter.json'''%self.URL
+    #     auth = self.AUTH
+    #     url = '%s?auth=%s'%(uri,auth)
+    #     data = '''{"%s":"%s"}'''%(name,counter)
+
+    #     request = urllib2.Request(url, data=data)
+    #     request.add_header('Content-Type', 'application/json')
+    #     request.add_header('Accept', 'application/json')
+    #     request.get_method = lambda: 'PATCH'
+    #     response = urllib2.urlopen(request)
+    #     counter_value = response.read()
+
+    #     return counter
+
+    # def counter_minus(self,name):
+    #     counter = self.counter_value(name)
+    #     if counter == u'0':
+    #         counter = str(int(counter))
+    #     else:
+    #         counter = str(int(counter) - 1)
+
+    #         uri ='''https://%s.wilddogio.com/counter.json'''%self.URL
+    #         auth = self.AUTH
+    #         url = '%s?auth=%s'%(uri,auth)
+    #         data = '''{"%s":"%s"}'''%(name,counter)
+
+    #         request = urllib2.Request(url, data=data)
+    #         request.add_header('Content-Type', 'application/json')
+    #         request.add_header('Accept', 'application/json')
+    #         request.get_method = lambda: 'PATCH'
+    #         response = urllib2.urlopen(request)
+    #         counter_value = response.read()
+
+    #     return counter
+
+
+
+    # def expires_get(self,name):
+    #     uri ='''https://%s.wilddogio.com/expires/%s.json'''%(self.URL,name)
+    #     auth = self.AUTH
+    #     url = '%s?auth=%s'%(uri,auth)
+
+    #     # print(url)
+
+    #     request = urllib2.Request(url)
+    #     request.add_header('Content-Type', 'application/json')
+    #     request.add_header('Accept', 'application/json')
+    #     request.add_header('User-agent', 'Mozilla/5.0')
+    #     request.get_method = lambda: 'GET'
+    #     response = urllib2.urlopen(request)
+    #     expires_value = response.read()
+    #     if expires_value == 'null':
+    #         expires_value = 'none'
+    #         return 'none'
+
+    #     else:
+    #         expires_value = json.loads(expires_value)
+    #         # print expires_value
+    #         expires_in_1 = unicode(int(expires_value[1]) - int(time.time()))
+    #         # print expires_in_1
+
+    #         if int(expires_in_1) < 0 :
+    #             expires_in_1 = 0
+
+    #         return '''["%s","%s","%s"]'''%(name,expires_value[0],expires_in_1)
+
+
+    # def expires_push(self,name,value,expires_in):
+    #     uri ='''https://%s.wilddogio.com/expires.json'''%self.URL
+    #     auth = self.AUTH
+    #     url = '%s?auth=%s'%(uri,auth)
+    #     # print int(time.time())
+    #     expires_in_1 = unicode(int(time.time()) + int(expires_in))
+    #     # print expires_in_1
+    #     data = '''{"%s":["%s","%s"]}'''%(name,value,expires_in_1)
+    #     # print data
+
+    #     request = urllib2.Request(url, data=data)
+    #     request.add_header('Content-Type', 'application/json')
+    #     request.add_header('Accept', 'application/json')
+    #     request.get_method = lambda: 'PATCH'
+    #     response = urllib2.urlopen(request)
+    #     expires_value = response.read()
+    #     # print counter_value
+    #     return '''["%s","%s","%s"]'''%(name,value,expires_in)
 
 
 
@@ -290,32 +388,17 @@ def main():
 
 
     k = Box(u,a)
-    # c = k.counter_minus('box')
-    # c = k.counter_plus('box')
-    # c = k.counter_value('box')
+    # c = k.counter_reduce('boxabc')
+    # c = k.counter_add('boxabc')
+    # c = k.counter_get('boxabc')
 
-    # c = k.datum_push('box','love qing')
-    c = k.datum_get2('box')
+    # c = k.datum_set('boxabc','love qing88')
+    # c = k.datum_get('boxabc')
 
-    # c = k.expires_push('box2','love qing22','10')
-    # c = k.expires_get('box31')
+    # c = k.expires_set('boxabc','love qing22','1000')
+    c = k.expires_get('boxabc')
     print(c)
 
-    # url="http://www.baidu.com/"
-    # try:
-    #     response=urllib2.urlopen(url)
-    #     print(response.info())
-    #     print('================================')
-    #     print(response.geturl())
-    #     print('================================')
-    #     print(response.getcode())
-    # except:
-    #     print('fail')
-
-    # try:
-    #     response = urllib2.urlopen('http://restrict.web.com')
-    # except urllib2.URLError,e:
-    #     print (e.reason)
 
 
 if __name__ == '__main__':
