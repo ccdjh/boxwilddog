@@ -8,14 +8,14 @@ boxwilddog官方网站：www.wilddog.com
 
 ##### 工具介绍：
 
-- 生成 json ORM
+- 生成json数据使用，一个小工具
 - 增强功能：counter ，datum ， expires
 
 
 
 ##### 补充说明：
 
-> 即使不使用wilddog的数据，joon ORM功能可以独立使用。
+> 即使不使用wilddog的数据，json ORM功能可以独立使用。
 
 
 
@@ -126,13 +126,13 @@ pip install boxwilddog
 
   AuthProperty TimeProperty StringProperty 三种类型值，使用default参数
 
-  AuthProperty 随机生成key
+  AuthProperty 随机生成key，参数与返回值都为字符串
 
-  TimeProperty 现在时间戳
+  TimeProperty 现在时间戳，参数与返回值都为字符串
 
-  StringProperty 默认没有值得时候，生成字符串'none'
+  StringProperty 默认没有值得时候，生成字符串'none'，参数与返回值都为字符串
 
-  **参数与返回值都为字符串**
+  ​
 
   ​
 
