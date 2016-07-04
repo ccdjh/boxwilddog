@@ -48,6 +48,7 @@ pip install boxwilddog
 
   url = 'You Wilddog URL'
   auth = 'You Wilddog AUTH'
+  #wild-horse-10086.wilddogio.com -> url = 'wild-horse-10086'
 
   box = boxwilddog.Box(url,auth)
   box_datum_set = box.datum_set('wild','dog')
